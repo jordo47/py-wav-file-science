@@ -1,3 +1,4 @@
+import sys
 import customtkinter as ctk
 from tkinter import filedialog
 import numpy as np
@@ -20,6 +21,18 @@ class App(ctk.CTk):
         print(f"Number of channels: {data.shape[1]}")
         length_seconds = data.shape[0] / sample_rate
         print(f"Length: {length_seconds:.2f} seconds")
+        left_max = np.max(np.absolute(data[:,0]))
+        right_max = np.max(np.absolute(data[:,1]))
+        left_avg = np.average(np.absolute(data[:,0]), axis=None,
+            weights=None, returned=False)
+        right_avg = np.average(np.absolute(data[:,1]), axis=None,
+            weights=None, returned=False)
+
+        print(f"Max Amplitude Left: {self.ampToDecibel(left_max):.2f} dB")
+        print(f"Max Amplitude Right: {self.ampToDecibel(right_max):.2f} dB")
+
+        print(f"Avg. Amplitude Left: {self.ampToDecibel(left_avg):.2f} dB")
+        print(f"Avg. Amplitude Right: {self.ampToDecibel(right_avg):.2f} dB")
         
         time = np.linspace(0., length_seconds, data.shape[0])
         fig, (left, right) = plt.subplots(2,1,figsize=(8,6))
@@ -38,7 +51,12 @@ class App(ctk.CTk):
         
         plt.tight_layout()
         plt.show()
-        
-        
+
+    def ampToDecibel(self, value: float):
+        normalAmp = value / 32767
+        db = 20 * np.log10(normalAmp)
+        return db
+
+
 app = App()
 app.mainloop()

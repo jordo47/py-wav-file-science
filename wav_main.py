@@ -13,10 +13,17 @@ class App(tk.Tk):
         super().__init__()
         self.geometry("250x250")
         self.title("Select a File...")
-        
+
         #create button and event for button click,, attach to root window
         self.button = tk.ttk.Button(self, text = "Upload WAV File", command = self.button_click)
-        self.button.grid(row = 0, column = 0, padx=75, pady=100)
+        self.button.grid(row = 0, column = 0, pady=15, padx=15)
+
+        #create checkbox for matplotlib
+        self.isMakeFig = tk.IntVar()
+        self.makeFigCheck = tk.Checkbutton(self, text="Plot Graph?", variable=self.isMakeFig)
+        self.makeFigCheck.grid(row=0, column=1)
+
+        
         
     def button_click(self):
         #open file dialog, restricted to wav files
@@ -55,34 +62,10 @@ class App(tk.Tk):
         
         time = np.linspace(0., length_seconds, data.shape[0])
         
-        #create matplots
-        if isStereo:
-            fig, (left, right) = plt.subplots(2,1,figsize=(8,6))
-            left.plot(time, data[:data.shape[0],0], label="Left channel")
-            right.plot(time, data[:data.shape[0],1], label="Right channel", color="orange")
+        if (self.isMakeFig):
+            self.plotGraph(time, data, isStereo)
         
-            left.set_xlabel("Time [s]")
-            right.set_xlabel("Time [s]")
-            left.set_ylabel("Amplitude")
-            right.set_ylabel("Amplitude")
         
-            left.set_title("Waveform of Left Channel")
-            right.set_title("Waveform of Right Channel")
-            left.legend()
-            right.legend()
-        
-            plt.tight_layout()
-            plt.show()
-        
-        else:
-            plt.plot(time, data[:])
-            plt.title("Waveform of Mono Channel")
-            plt.xlabel("Time [s]")
-            plt.ylabel("Amplitude")
-            plt.legend()
-            plt.tight_layout()
-            plt.show()
-
     #convert amplitude to decibel
     def ampToDecibel(self, value: float):
         normalAmp = value / 32767
@@ -122,6 +105,36 @@ class App(tk.Tk):
         ttk.Label(frm, text=isMono + f" {self.ampToDecibel(avgL):.2f} dB").grid(column=1, row=3)
         if isStereo:
             ttk.Label(frm, text=f"R {self.ampToDecibel(avgR):.2f} dB").grid(column=2, row=3)
+
+    def plotGraph(self, time: np.ndarray, data: np.ndarray, isStereo: bool):
+        #create matplots
+        if isStereo:
+            fig, (left, right) = plt.subplots(2,1,figsize=(8,6))
+            left.plot(time, data[:data.shape[0],0], label="Left channel")
+            right.plot(time, data[:data.shape[0],1], label="Right channel", color="orange")
+        
+            left.set_xlabel("Time [s]")
+            right.set_xlabel("Time [s]")
+            left.set_ylabel("Amplitude")
+            right.set_ylabel("Amplitude")
+        
+            left.set_title("Waveform of Left Channel")
+            right.set_title("Waveform of Right Channel")
+            left.legend()
+            right.legend()
+        
+            plt.tight_layout()
+            plt.show()
+        
+        else:
+            plt.plot(time, data[:])
+            plt.title("Waveform of Mono Channel")
+            plt.xlabel("Time [s]")
+            plt.ylabel("Amplitude")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+
 
 
 

@@ -25,36 +25,41 @@ class App(tk.Tk):
 
         #read wav file
         sample_rate, data = wavfile.read(file_path)
-        isStereo = data.shape[1] - 1
+        isStereo = len(data.shape) - 1
 
         length_seconds = data.shape[0] / sample_rate
         print(f"Length: {length_seconds:.2f} seconds")
         
         #find max and avg. amplitudes for each channel
-        left_max = np.max(np.absolute(data[:,0]))
+        
         if isStereo:
+            left_max = np.max(np.absolute(data[:,0]))
             right_max = np.max(np.absolute(data[:,1]))
         else:
+            left_max = np.max(np.absolute(data[:]))
             right_max = 0
-        left_avg = np.average(np.absolute(data[:,0]), axis=None,
-            weights=None, returned=False)
+        
         if isStereo:
+            left_avg = np.average(np.absolute(data[:,0]), axis=None,
+                weights=None, returned=False)
             right_avg = np.average(np.absolute(data[:,1]), axis=None,
                 weights=None, returned=False)
         else:
+            left_avg = np.average(np.absolute(data[:]), axis=None,
+                weights=None, returned=False)
             right_avg = 0
 
         #create song details window
         self.showData(os.path.basename(file_path), length_seconds, left_max, right_max,
             left_avg, right_avg, isStereo)
         
-        time = np.linspace(0., length_seconds / 60, data.shape[0] / 60)
+        time = np.linspace(0., length_seconds, data.shape[0])
         
         #create matplots
         if isStereo:
             fig, (left, right) = plt.subplots(2,1,figsize=(8,6))
-            left.plot(time, data[:data.shape[0]/60,0], label="Left channel")
-            right.plot(time, data[:data.shape[0]/60,1], label="Right channel", color="orange")
+            left.plot(time, data[:data.shape[0],0], label="Left channel")
+            right.plot(time, data[:data.shape[0],1], label="Right channel", color="orange")
         
             left.set_xlabel("Time [s]")
             right.set_xlabel("Time [s]")
@@ -70,10 +75,10 @@ class App(tk.Tk):
             plt.show()
         
         else:
-            plt.plot(time, data[:,0])
-            plt.set_title("Waveform of Mono Channel")
-            plt.set_xlabel("Time [s]")
-            plt.set_ylabel("Amplitude")
+            plt.plot(time, data[:])
+            plt.title("Waveform of Mono Channel")
+            plt.xlabel("Time [s]")
+            plt.ylabel("Amplitude")
             plt.legend()
             plt.tight_layout()
             plt.show()

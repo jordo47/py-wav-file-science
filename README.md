@@ -3,8 +3,9 @@ Run with Python 3(.12.2)
 
 pip install dependecies:
 -numpy
--customtkinter
 -scipy
 -matplotlib
+-pyloudnorm
+-soundfile
 
 Happy hacking! :D

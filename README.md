@@ -5,5 +5,7 @@ pip install dependecies:
 -numpy
 -scipy
 -matplotlib
+-pyloudnorm
+-soundfile
 
 Happy hacking! :D

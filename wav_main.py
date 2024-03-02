@@ -6,6 +6,8 @@ import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import os
+import pyloudnorm as pyln
+import soundfile as sf
 
 class App(tk.Tk):
     #initialize root window of app
@@ -38,31 +40,30 @@ class App(tk.Tk):
         print(f"Length: {length_seconds:.2f} seconds")
         
         #find max and avg. amplitudes for each channel
-        
         if isStereo:
             left_max = np.max(np.absolute(data[:,0]))
             right_max = np.max(np.absolute(data[:,1]))
-        else:
-            left_max = np.max(np.absolute(data[:]))
-            right_max = 0
-        
-        if isStereo:
             left_avg = np.average(np.absolute(data[:,0]), axis=None,
                 weights=None, returned=False)
             right_avg = np.average(np.absolute(data[:,1]), axis=None,
                 weights=None, returned=False)
         else:
+            left_max = np.max(np.absolute(data[:]))
+            right_max = 0
             left_avg = np.average(np.absolute(data[:]), axis=None,
                 weights=None, returned=False)
             right_avg = 0
+            
+        #get integrated loudness(lufs)
+        lufs = self.getLUFS(file_path)
 
         #create song details window
         self.showData(os.path.basename(file_path), length_seconds, left_max, right_max,
-            left_avg, right_avg, isStereo)
+            left_avg, right_avg, lufs, isStereo)
         
         time = np.linspace(0., length_seconds, data.shape[0])
         
-        if (self.isMakeFig):
+        if (self.isMakeFig.get()):
             self.plotGraph(time, data, isStereo)
         
         
@@ -74,11 +75,12 @@ class App(tk.Tk):
 
     #create song details window
     def showData(self, filename: str, songLength: float, 
-        maxL: float, maxR: float, avgL: float, avgR: float, isStereo: bool):
+        maxL: float, maxR: float, avgL: float, avgR: float,
+        lufs: float, isStereo: bool):
 
         #create window and frame
         data_w = tk.Toplevel(self)
-        data_w.geometry("500x100")
+        data_w.geometry("300x150")
         data_w.title("Song Details")
 
         frm = ttk.Frame(data_w, padding=10)
@@ -90,21 +92,21 @@ class App(tk.Tk):
             isMono = "L"
 
         #display file name
-        ttk.Label(frm, text="Filename: ").grid(column=0, row=0)
-        ttk.Label(frm, text=filename).grid(column=1, row=0)
+        ttk.Label(frm, text="Filename: " + filename).grid(column=0, row=0)
         #display song length
-        ttk.Label(frm, text="Song Length: ").grid(column=0, row=1)
-        ttk.Label(frm, text=f"{songLength:.2f}s").grid(column=1, row=1)
+        ttk.Label(frm, text="Song Length: " + f"{songLength:.2f}s").grid(column=0, row=1)
         #display max amp as dB
-        ttk.Label(frm, text="Max Amplitude: ").grid(column=0, row=2)
-        ttk.Label(frm, text=isMono + f" {self.ampToDecibel(maxL):.2f} dB").grid(column=1, row=2)
+        ttk.Label(frm, text="Max Amplitude: " + isMono + 
+            f" {self.ampToDecibel(maxL):.2f} dB").grid(column=0, row=2)
         if isStereo:
-            ttk.Label(frm, text=f"R {self.ampToDecibel(maxR):.2f} dB").grid(column=2, row=2)
+            ttk.Label(frm, text=f"R {self.ampToDecibel(maxR):.2f} dB").grid(column=1, row=2)
         #display avg amp as dB
-        ttk.Label(frm, text="Average Amplitude: ").grid(column=0, row=3)
-        ttk.Label(frm, text=isMono + f" {self.ampToDecibel(avgL):.2f} dB").grid(column=1, row=3)
+        ttk.Label(frm, text="Avg. Amplitude: " + isMono + 
+            f" {self.ampToDecibel(avgL):.2f} dB").grid(column=0, row=3)
         if isStereo:
-            ttk.Label(frm, text=f"R {self.ampToDecibel(avgR):.2f} dB").grid(column=2, row=3)
+            ttk.Label(frm, text=f"R {self.ampToDecibel(avgR):.2f} dB").grid(column=1, row=3)
+        #display LUFS
+        ttk.Label(frm, text="LUFS: " + f"{lufs:.2f}").grid(column=0, row=4)
 
     def plotGraph(self, time: np.ndarray, data: np.ndarray, isStereo: bool):
         #create matplots
@@ -134,6 +136,12 @@ class App(tk.Tk):
             plt.legend()
             plt.tight_layout()
             plt.show()
+
+    def getLUFS(self, filepath: str):
+        data, rate = sf.read(filepath)
+        meter = pyln.Meter(rate)
+        lufs = meter.integrated_loudness(data)
+        return lufs
 
 
 
